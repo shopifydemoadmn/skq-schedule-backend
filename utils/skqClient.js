@@ -1,13 +1,15 @@
 const axios = require('axios');
+const { getAccessToken } = require('./skqAuth');
 
 const baseURL = process.env.SKQ_API_BASE_URL;
-const apiKey = process.env.SKQ_API_KEY;
 
-function client() {
+async function client() {
+  const token = await getAccessToken();
+
   return axios.create({
     baseURL,
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     }
@@ -15,18 +17,20 @@ function client() {
 }
 
 async function findClosestLocation() {
-  console.log("👉 FULL URL:", baseURL + "/Locations");
-  const res = await client().get('/Locations');
+  const api = await client();
+  const res = await api.get('/Locations');
   return res.data;
 }
 
 async function getTimeslots(locationCode) {
-  const res = await client().get(`/TimeSlots/${locationCode}`);
+  const api = await client();
+  const res = await api.get(`/TimeSlots/${locationCode}`);
   return res.data;
 }
 
 async function createAppointment(payload) {
-  const res = await client().put('/Appointments', payload);
+  const api = await client();
+  const res = await api.put('/Appointments', payload);
   return res.data;
 }
 
