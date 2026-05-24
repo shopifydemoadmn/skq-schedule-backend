@@ -13,18 +13,21 @@ function client() {
   });
 }
 
-async function findClosestLocation(payload) {
-  const res = await client().post('/locations/search', payload);
+// ✔ Получить список всех локаций
+async function findClosestLocation() {
+  const res = await client().get('/Locations');
   return res.data;
 }
 
-async function getTimeslots(locationId, payload) {
-  const res = await client().post(`/locations/${locationId}/timeslots`, payload);
+// ✔ Получить таймслоты по locationCode
+async function getTimeslots(locationCode) {
+  const res = await client().get(`/TimeSlots/${locationCode}`);
   return res.data;
 }
 
+// ✔ Создать appointment
 async function createAppointment(payload) {
-  const res = await client().put('/appointments', payload);
+  const res = await client().put('/Appointments', payload);
   return res.data;
 }
 

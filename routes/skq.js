@@ -11,7 +11,7 @@ router.use((req, res, next) => {
 
 router.post('/locations', async (req, res) => {
   try {
-    const data = await findClosestLocation(req.body);
+    const data = await findClosestLocation();
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: 'SKQ locations error' });
@@ -20,13 +20,15 @@ router.post('/locations', async (req, res) => {
 
 router.post('/timeslots', async (req, res) => {
   try {
-    const { locationId, ...rest } = req.body;
-    const data = await getTimeslots(locationId, rest);
+    const { locationCode } = req.body;
+    const data = await getTimeslots(locationCode);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: 'SKQ timeslots error' });
   }
 });
+
+
 
 router.post('/appointments', async (req, res) => {
   try {
