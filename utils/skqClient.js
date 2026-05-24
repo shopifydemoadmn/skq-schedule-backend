@@ -15,6 +15,7 @@ function client() {
 }
 
 async function findClosestLocation() {
+  console.log("👉 FULL URL:", baseURL + "/Locations");
   const res = await client().get('/Locations');
   return res.data;
 }
