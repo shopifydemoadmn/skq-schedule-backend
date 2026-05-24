@@ -14,6 +14,7 @@ router.post('/locations', async (req, res) => {
     const data = await findClosestLocation();
     res.json(data);
   } catch (e) {
+    console.error('SKQ locations error:', e.response?.data || e.message);
     res.status(500).json({ error: 'SKQ locations error' });
   }
 });
