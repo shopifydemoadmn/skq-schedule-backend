@@ -1,14 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const cors = require('cors'); // ← добавили
+const cors = require('cors');
+
 const { router: authRouter } = require('./routes/auth');
 const skqRouter = require('./routes/skq');
 const webhooksRouter = require('./routes/webhooks');
 
 const app = express();
 
-// ⭐ CORS ДОЛЖЕН БЫТЬ ПЕРВЫМ
+// ⭐ CORS должен быть самым первым
 app.use(cors({
   origin: [
     'https://pro-2026.myshopify.com',
@@ -18,7 +19,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type'],
 }));
 
-app.options('*', cors()); // ← разрешаем preflight
+app.options('*', cors());
 
 app.use(cookieParser());
 app.use(express.json());
@@ -27,8 +28,12 @@ app.get('/', (req, res) => {
   res.send('<h1>SKQ backend is running</h1>');
 });
 
+// Webhooks должны принимать raw body
 app.use('/webhooks/orders/paid', express.raw({ type: 'application/json' }));
+
+// JSON парсер после raw
 app.use(express.json());
+
 app.use('/', authRouter);
 app.use('/skq', skqRouter);
 app.use('/webhooks', webhooksRouter);
