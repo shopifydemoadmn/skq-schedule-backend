@@ -14,7 +14,7 @@ async function getAccessToken() {
   const tenantId = process.env.OAUTH_TENANT_ID;
   const clientId = process.env.SKQ_CLIENT_ID;
   const clientSecret = process.env.SKQ_CLIENT_SECRET;
-  const scope = process.env.SKQ_SCOPE; // api://ccq-cx-scheduling-bff-api/.default
+  const scope = process.env.SKQ_SCOPE;
 
   const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
 
