@@ -13,19 +13,16 @@ function client() {
   });
 }
 
-// ✔ Получить список всех локаций
 async function findClosestLocation() {
   const res = await client().get('/Locations');
   return res.data;
 }
 
-// ✔ Получить таймслоты по locationCode
 async function getTimeslots(locationCode) {
   const res = await client().get(`/TimeSlots/${locationCode}`);
   return res.data;
 }
 
-// ✔ Создать appointment
 async function createAppointment(payload) {
   const res = await client().put('/Appointments', payload);
   return res.data;
