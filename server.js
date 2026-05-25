@@ -10,7 +10,7 @@ const { getCoordsByZip } = require('./utils/geo');
 
 const app = express();
 
-// ⭐ CORS должен быть самым первым
+// ⭐ CORS первым
 app.use(cors({
   origin: [
     'https://pro-2026.myshopify.com',
@@ -20,8 +20,21 @@ app.use(cors({
   allowedHeaders: ['Content-Type'],
 }));
 
+// ⭐ JSON-парсер ДОЛЖЕН быть до всех POST маршрутов
+app.use(express.json());
+
+// ⭐ Cookie parser можно после JSON
+app.use(cookieParser());
+
+/* ---------------- GEO ROUTE ---------------- */
 app.post('/geo/zip', async (req, res) => {
   try {
+    console.log('📮 req.body:', req.body);
+
+    if (!req.body || !req.body.zip) {
+      return res.status(400).json({ error: 'ZIP_NOT_PROVIDED' });
+    }
+
     const { zip } = req.body;
 
     const coords = await getCoordsByZip(zip);
@@ -37,21 +50,13 @@ app.post('/geo/zip', async (req, res) => {
   }
 });
 
-app.options('*', cors());
-
-app.use(cookieParser());
-app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.send('<h1>SKQ backend is running</h1>');
-});
-
-// Webhooks должны принимать raw body
+/* ---------------- RAW WEBHOOKS ---------------- */
 app.use('/webhooks/orders/paid', express.raw({ type: 'application/json' }));
 
-// JSON парсер после raw
+// ⭐ JSON-парсер снова после raw — это нормально
 app.use(express.json());
 
+/* ---------------- ROUTES ---------------- */
 app.use('/', authRouter);
 app.use('/skq', skqRouter);
 app.use('/webhooks', webhooksRouter);
