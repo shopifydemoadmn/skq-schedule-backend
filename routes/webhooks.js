@@ -1,28 +1,51 @@
 const express = require('express');
-const crypto = require('crypto');
-
 const router = express.Router();
+const { createAppointment, getAppointment } = require('../utils/skqAppointments');
 
-router.post('/orders/paid', express.raw({ type: 'application/json' }), (req, res) => {
-  const hmac = req.get('X-Shopify-Hmac-Sha256');
-  const body = req.body;
+router.post('/orders/paid', async (req, res) => {
+  try {
+    const order = req.body;
 
-  const digest = crypto
-    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
-    .update(body, 'utf8')
-    .digest('base64');
+    const line = order.line_items[0];
+    const props = {};
+    line.properties?.forEach(p => props[p.name] = p.value);
 
-  if (digest !== hmac) {
-    console.log('❌ Invalid webhook HMAC');
-    return res.status(401).send('Invalid HMAC');
+    const locationCode = props.locationCode;
+    const carrierCode = props.carrierCode;
+    const claimNumber = props.claimNumber;
+    const startTime = props.timeslotStart;
+    const endTime = props.timeslotEnd;
+
+    console.log('==============================');
+    console.log('🧾 ORDER PAID WEBHOOK RECEIVED');
+    console.log('Order ID:', order.id);
+    console.log('Customer:', order.email);
+    console.log('Properties:', props);
+    console.log('==============================');
+
+    // ⭐ TEST MODE — НЕ СОЗДАЁМ APPOINTMENT
+    if (process.env.SKQ_TEST_MODE === 'true') {
+      console.log('🧪 SKQ TEST MODE ENABLED — Appointment NOT created');
+      return res.status(200).send('test-mode-ok');
+    }
+
+    // ⭐ Normal mode — fallback: check if exists
+    try {
+      const existing = await getAppointment(locationCode, carrierCode, claimNumber);
+      console.log('⚠ Appointment already exists:', existing);
+      return res.status(200).send('already-exists');
+    } catch (err) {
+      console.log('ℹ Appointment not found — creating new one');
+    }
+
+    const result = await createAppointment(locationCode, carrierCode, claimNumber, {});
+    console.log('✔ Appointment created:', result);
+
+    res.status(200).send('ok');
+  } catch (err) {
+    console.error('❌ Appointment error:', err.response?.data || err);
+    res.status(500).send('error');
   }
-
-  const json = JSON.parse(body.toString('utf8'));
-
-  console.log('📦 ORDER PAID WEBHOOK RECEIVED');
-  console.log(JSON.stringify(json, null, 2));
-
-  res.status(200).send('OK');
 });
 
 module.exports = router;

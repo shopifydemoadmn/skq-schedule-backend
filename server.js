@@ -65,3 +65,26 @@ const port = process.env.PORT || 10000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+
+const { getAppointment, deleteAppointment } = require('./utils/skqAppointments');
+
+app.get('/test/appointment', async (req, res) => {
+  try {
+    const { locationCode, carrierCode, claimNumber } = req.query;
+    const data = await getAppointment(locationCode, carrierCode, claimNumber);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json(err.response?.data || err);
+  }
+});
+
+app.delete('/test/appointment', async (req, res) => {
+  try {
+    const { locationCode, carrierCode, claimNumber } = req.query;
+    const data = await deleteAppointment(locationCode, carrierCode, claimNumber);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json(err.response?.data || err);
+  }
+});
