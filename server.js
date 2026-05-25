@@ -6,6 +6,7 @@ const cors = require('cors');
 const { router: authRouter } = require('./routes/auth');
 const skqRouter = require('./routes/skq');
 const webhooksRouter = require('./routes/webhooks');
+const { getCoordsByZip } = require('./utils/geo');
 
 const app = express();
 
@@ -18,6 +19,23 @@ app.use(cors({
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));
+
+app.post('/geo/zip', async (req, res) => {
+  try {
+    const { zip } = req.body;
+
+    const coords = await getCoordsByZip(zip);
+
+    if (!coords) {
+      return res.status(404).json({ error: 'ZIP not found' });
+    }
+
+    res.json(coords);
+  } catch (err) {
+    console.error('Geo error:', err);
+    res.status(500).json({ error: 'Geo lookup failed' });
+  }
+});
 
 app.options('*', cors());
 
