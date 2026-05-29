@@ -63,21 +63,16 @@ exports.handler = async (event) => {
       headers: { "Content-Type": "application/json" }
     });
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("SKQ error:", text);
-      return {
-        statusCode: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Allow-Methods": "POST, OPTIONS"
-        },
-        body: JSON.stringify({ error: "SKQ API error", details: text })
-      };
-    }
+    const text = await res.text();
 
-    const locations = await res.json();
+    let locations = [];
+    try {
+      locations = JSON.parse(text);
+      if (!Array.isArray(locations)) locations = [];
+    } catch {
+      console.error("SKQ returned non-JSON:", text);
+      locations = [];
+    }
 
     // --- Filter by ZIP ---
     const filtered = locations.filter(loc => loc.zipCode === zip);
@@ -95,13 +90,13 @@ exports.handler = async (event) => {
   } catch (err) {
     console.error("Function error:", err);
     return {
-      statusCode: 500,
+      statusCode: 200, // ВАЖНО: возвращаем 200, чтобы фронт не ломался
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
-      body: JSON.stringify({ error: "Server error", details: err.message })
+      body: JSON.stringify([]) // Возвращаем пустой массив, чтобы фронт не падал
     };
   }
 };
