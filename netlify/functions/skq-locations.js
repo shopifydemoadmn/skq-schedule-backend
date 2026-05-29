@@ -1,10 +1,9 @@
+const { getAccessToken } = require("./skqAuth");
 const SKQ_API_BASE_URL = process.env.SKQ_API_BASE_URL;
 
 exports.handler = async (event) => {
 
   console.log("ENV SKQ:", SKQ_API_BASE_URL);
-  console.log("ENV SKQ:process.env.", process.env.SKQ_API_BASE_URL);
-
 
   // --- OPTIONS (preflight) ---
   if (event.httpMethod === 'OPTIONS') {
@@ -61,20 +60,27 @@ exports.handler = async (event) => {
   }
 
   try {
-    // --- Correct SKQ endpoint: GET /Locations ---
+    // --- Get OAuth token ---
+    const token = await getAccessToken();
+
+    // --- Call SKQ API ---
     const res = await fetch(`${SKQ_API_BASE_URL}/Locations`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" }
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
     });
 
     const text = await res.text();
+    console.log("SKQ RAW:", text);
 
     let locations = [];
     try {
       locations = JSON.parse(text);
       if (!Array.isArray(locations)) locations = [];
     } catch {
-      console.error("SKQ returned non-JSON:", text);
+      console.error("SKQ returned non-JSON");
       locations = [];
     }
 
@@ -85,19 +91,19 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
-      body: JSON.stringify(locations) // ← возвращаем ВСЁ
+      body: JSON.stringify(locations)
     };
 
   } catch (err) {
     console.error("Function error:", err);
     return {
-      statusCode: 200, // ВАЖНО: возвращаем 200, чтобы фронт не ломался
+      statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
-      body: JSON.stringify([]) // Возвращаем пустой массив, чтобы фронт не падал
+      body: JSON.stringify([])
     };
   }
 };
