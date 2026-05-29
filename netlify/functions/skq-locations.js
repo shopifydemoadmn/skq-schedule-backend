@@ -74,9 +74,6 @@ exports.handler = async (event) => {
       locations = [];
     }
 
-    // --- Filter by ZIP ---
-    const filtered = locations.filter(loc => loc.zipCode === zip);
-
     return {
       statusCode: 200,
       headers: {
@@ -84,7 +81,7 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
-      body: JSON.stringify(filtered)
+      body: JSON.stringify(locations) // ← возвращаем ВСЁ
     };
 
   } catch (err) {
