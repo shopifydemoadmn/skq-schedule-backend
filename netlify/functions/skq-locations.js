@@ -35,7 +35,11 @@ exports.handler = async (event) => {
   } catch (e) {
     return {
       statusCode: 400,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      },
       body: JSON.stringify({ error: "Invalid JSON" })
     };
   }
@@ -43,7 +47,11 @@ exports.handler = async (event) => {
   if (!zip) {
     return {
       statusCode: 400,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      },
       body: JSON.stringify({ error: "ZIP is required" })
     };
   }
@@ -60,21 +68,26 @@ exports.handler = async (event) => {
       console.error("SKQ error:", text);
       return {
         statusCode: 500,
-        headers: { "Access-Control-Allow-Origin": "*" },
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Methods": "POST, OPTIONS"
+        },
         body: JSON.stringify({ error: "SKQ API error", details: text })
       };
     }
 
     const locations = await res.json();
 
-    // --- Filter by ZIP (SKQ returns all locations) ---
+    // --- Filter by ZIP ---
     const filtered = locations.filter(loc => loc.zipCode === zip);
 
     return {
       statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type"
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
       body: JSON.stringify(filtered)
     };
@@ -83,7 +96,11 @@ exports.handler = async (event) => {
     console.error("Function error:", err);
     return {
       statusCode: 500,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      },
       body: JSON.stringify({ error: "Server error", details: err.message })
     };
   }
