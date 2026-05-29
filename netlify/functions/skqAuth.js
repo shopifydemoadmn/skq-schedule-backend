@@ -1,9 +1,7 @@
-const fetch = require("node-fetch");
-
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-async function getAccessToken() {
+exports.getAccessToken = async () => {
   const now = Date.now();
 
   if (cachedToken && now < tokenExpiresAt) {
@@ -28,6 +26,4 @@ async function getAccessToken() {
   tokenExpiresAt = now + (data.expires_in - 60) * 1000;
 
   return cachedToken;
-}
-
-module.exports = { getAccessToken };
+};
