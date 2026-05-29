@@ -1,6 +1,12 @@
+console.log("ENV SKQ:", SKQ_API_BASE_URL);
+
 const SKQ_API_BASE_URL = process.env.SKQ_API_BASE_URL;
 
 exports.handler = async (event) => {
+
+  console.log("ENV SKQ:", SKQ_API_BASE_URL);
+  console.log("ENV SKQ:process.env.", process.env.SKQ_API_BASE_URL);
+
 
   // --- OPTIONS (preflight) ---
   if (event.httpMethod === 'OPTIONS') {
