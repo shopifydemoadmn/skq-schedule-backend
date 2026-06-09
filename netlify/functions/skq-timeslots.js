@@ -2,11 +2,10 @@ const { getAccessToken } = require("./skqAuth");
 const SKQ_API_BASE_URL = process.env.SKQ_API_BASE_URL;
 
 exports.handler = async (event) => {
-
   console.log("ENV SKQ:", SKQ_API_BASE_URL);
 
-  // --- OPTIONS (preflight) ---
-  if (event.httpMethod === 'OPTIONS') {
+  // --- OPTIONS ---
+  if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
       headers: {
@@ -18,8 +17,7 @@ exports.handler = async (event) => {
     };
   }
 
-  // --- Only POST allowed ---
-  if (event.httpMethod !== 'POST') {
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
       headers: {
@@ -32,10 +30,10 @@ exports.handler = async (event) => {
   }
 
   // --- Parse body ---
-  let locationCode;
+  let body;
   try {
-    locationCode = JSON.parse(event.body || '{}').locationCode;
-  } catch (e) {
+    body = JSON.parse(event.body || "{}");
+  } catch {
     return {
       statusCode: 400,
       headers: {
@@ -47,6 +45,7 @@ exports.handler = async (event) => {
     };
   }
 
+  const locationCode = body.locationCode;
   if (!locationCode) {
     return {
       statusCode: 400,
@@ -59,29 +58,45 @@ exports.handler = async (event) => {
     };
   }
 
+  // --- Dynamic dates ---
+  const today = new Date();
+  const end = new Date();
+  end.setDate(today.getDate() + 14);
+
+  const format = (d) =>
+    `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${d.getFullYear()}`;
+
+  const startTime = format(today);
+  const endTime = format(end);
+
+  console.log("DATES:", { startTime, endTime });
+
   try {
-    // --- Get OAuth token ---
     const token = await getAccessToken();
 
-    // --- Call SKQ API ---
-    const res = await fetch(`${SKQ_API_BASE_URL}/TimeSlots/${locationCode}`, {
+    const url = `${SKQ_API_BASE_URL}/timeslots/${locationCode}` +
+      `?appointmentType=Drop-off&carrierCode=9&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}`;
+
+    console.log("➡️ SKQ URL:", url);
+
+    const res = await fetch(url, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       }
     });
 
     const text = await res.text();
-    console.log("SKQ TIMESLOTS RAW:", text);
+    console.log("⬅️ SKQ RAW:", text);
 
-    let timeslots = [];
+    let data;
     try {
-      timeslots = JSON.parse(text);
-      if (!Array.isArray(timeslots)) timeslots = [];
+      data = JSON.parse(text);
     } catch {
-      console.error("SKQ returned non-JSON for timeslots");
-      timeslots = [];
+      data = [];
     }
 
     return {
@@ -91,7 +106,7 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
-      body: JSON.stringify(timeslots)
+      body: JSON.stringify(data)
     };
 
   } catch (err) {
