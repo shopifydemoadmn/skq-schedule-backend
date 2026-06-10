@@ -1,6 +1,7 @@
 const SKQ_API_BASE_URL = process.env.SKQ_API_BASE_URL;
 const SKQ_CLIENT_ID = process.env.SKQ_CLIENT_ID;
 const SKQ_CLIENT_SECRET = process.env.SKQ_CLIENT_SECRET;
+const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -62,15 +63,25 @@ exports.handler = async (event) => {
 
   const text = await response.text();
 
+  // Try to parse SKQ response
+  let skq = {};
+  try { skq = JSON.parse(text); } catch {}
+
+  // Write note to Shopify order
+  await writeOrderNote(order.id, `
+SKQ Appointment created:
+locationCode: ${locationCode}
+carrierCode: ${carrierCode}
+claimNumber: ${claimNumber}
+scheduleId: ${skq.scheduleId || 0}
+workfileId: ${skq.workfileId || 0}
+  `);
+
   return {
     statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type"
-    },
     body: JSON.stringify({
       status: "appointment_created",
-      skqResponse: text
+      skqResponse: skq
     })
   };
 };
@@ -84,4 +95,15 @@ async function getAccessToken() {
 
   const json = await res.json();
   return json.access_token;
+}
+
+async function writeOrderNote(orderId, note) {
+  await fetch(`https://your-shop.myshopify.com/admin/api/2024-01/orders/${orderId}.json`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN
+    },
+    body: JSON.stringify({ order: { id: orderId, note } })
+  });
 }
