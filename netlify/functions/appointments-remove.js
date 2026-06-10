@@ -1,4 +1,6 @@
 const SKQ_API_BASE_URL = process.env.SKQ_API_BASE_URL;
+const SKQ_CLIENT_ID = process.env.SKQ_CLIENT_ID;
+const SKQ_CLIENT_SECRET = process.env.SKQ_CLIENT_SECRET;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -7,13 +9,17 @@ exports.handler = async (event) => {
 
   const { locationCode, carrierCode, claimNumber } = JSON.parse(event.body || '{}');
 
-  const res = await fetch(`${SKQ_API_BASE_URL}/appointments/remove`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ locationCode, carrierCode, claimNumber })
-  });
+  const token = await getAccessToken();
 
-  const data = await res.json();
+  const res = await fetch(
+    `${SKQ_API_BASE_URL}/Appointments/${locationCode}/${carrierCode}/${claimNumber}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+
+  const text = await res.text();
 
   return {
     statusCode: 200,
@@ -21,6 +27,17 @@ exports.handler = async (event) => {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "Content-Type"
     },
-    body: JSON.stringify(data)
+    body: text
   };
 };
+
+async function getAccessToken() {
+  const res = await fetch(`${SKQ_API_BASE_URL}/oauth/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=client_credentials&client_id=${SKQ_CLIENT_ID}&client_secret=${SKQ_CLIENT_SECRET}`
+  });
+
+  const json = await res.json();
+  return json.access_token;
+}
