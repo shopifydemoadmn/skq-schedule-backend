@@ -1,42 +1,77 @@
+const { getAccessToken } = require('./skqAuth');
+
 const SKQ_API_BASE_URL = process.env.SKQ_API_BASE_URL;
-const SKQ_CLIENT_ID = process.env.SKQ_CLIENT_ID;
-const SKQ_CLIENT_SECRET = process.env.SKQ_CLIENT_SECRET;
 
 exports.handler = async (event) => {
+  console.log('[appointments-check] Received request');
+
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const { locationCode, carrierCode, claimNumber } = JSON.parse(event.body || '{}');
+  let body;
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch (e) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
+  }
 
-  const token = await getAccessToken();
+  const { locationCode, carrierCode, claimNumber } = body;
 
-  const res = await fetch(
-    `${SKQ_API_BASE_URL}/Appointments/${locationCode}/${carrierCode}/${claimNumber}`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
+  if (!locationCode || !carrierCode || !claimNumber) {
+    return {
+      statusCode: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'locationCode, carrierCode, claimNumber are required' })
+    };
+  }
 
-  const data = await res.json();
+  console.log('[appointments-check]', { locationCode, carrierCode, claimNumber });
+
+  let token;
+  try {
+    token = await getAccessToken();
+  } catch (err) {
+    console.error('[appointments-check] OAuth error:', err.message);
+    return { statusCode: 500, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'auth_failed' }) };
+  }
+
+  const skqUrl = `${SKQ_API_BASE_URL}/Appointments/${locationCode}/${carrierCode}/${claimNumber}`;
+  console.log(`[appointments-check] GET ${skqUrl}`);
+
+  const res = await fetch(skqUrl, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const text = await res.text();
+  console.log(`[appointments-check] SKQ status: ${res.status}, body: ${text}`);
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = { raw: text };
+  }
 
   return {
-    statusCode: 200,
+    statusCode: res.status,
     headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type"
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS'
     },
     body: JSON.stringify(data)
   };
 };
-
-async function getAccessToken() {
-  const res = await fetch(`${SKQ_API_BASE_URL}/oauth/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=client_credentials&client_id=${SKQ_CLIENT_ID}&client_secret=${SKQ_CLIENT_SECRET}`
-  });
-
-  const json = await res.json();
-  return json.access_token;
-}
