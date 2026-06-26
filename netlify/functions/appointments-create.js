@@ -30,14 +30,14 @@ exports.handler = async (event) => {
   }
 
   const locationCode = props.locationCode;
-  const carrierCode = props.carrierCode;
-  const claimNumber = props.claimNumber;
+  const carrierCode = props.carrierCode || '1';
+  const claimNumber = props.claimNumber || `ORDER-${orderId}`;
   const timeslotStart = props.timeslotStart;
   const timeslotEnd = props.timeslotEnd;
 
   console.log('[appointments-create] Extracted properties:', { locationCode, carrierCode, claimNumber, timeslotStart });
 
-  if (!locationCode || !carrierCode || !claimNumber || !timeslotStart) {
+  if (!locationCode || !timeslotStart) {
     console.warn('[appointments-create] Missing required properties');
     return {
       statusCode: 400,
