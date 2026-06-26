@@ -47,7 +47,7 @@ exports.handler = async (event) => {
 
   const firstName = order.customer?.first_name || '';
   const lastName = order.customer?.last_name || '';
-  const phoneNumber = order.customer?.phone || '';
+  const phoneNumber = props.phone || order.customer?.phone || order.billing_address?.phone || '0000000000';
   const email = order.email || '';
   const zipCode = order.shipping_address?.zip || '';
   const address = order.shipping_address?.address1 || '';
