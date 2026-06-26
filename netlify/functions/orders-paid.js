@@ -95,8 +95,8 @@ exports.handler = async (event) => {
   const props = parseProperties(line);
 
   const locationCode = props.locationCode;
-  const carrierCode = props.carrierCode;
-  const claimNumber = props.claimNumber;
+  const carrierCode = props.carrierCode || '1';
+  const claimNumber = props.claimNumber || `ORDER-${orderId}`;
   const timeslotStart = props.timeslotStart;
   const timeslotEnd = props.timeslotEnd;
   const vehicleYear = props.vehicleYear ? parseInt(props.vehicleYear, 10) : null;
@@ -108,11 +108,9 @@ exports.handler = async (event) => {
     vehicleYear, vehicleMake, vehicleModel
   });
 
-  if (!locationCode || !carrierCode || !claimNumber || !timeslotStart) {
+  if (!locationCode || !timeslotStart) {
     const missing = [];
     if (!locationCode) missing.push('locationCode');
-    if (!carrierCode) missing.push('carrierCode');
-    if (!claimNumber) missing.push('claimNumber');
     if (!timeslotStart) missing.push('timeslotStart');
 
     console.warn('[orders-paid] Missing required properties:', missing.join(', '));
