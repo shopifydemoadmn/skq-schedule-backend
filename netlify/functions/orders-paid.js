@@ -96,7 +96,7 @@ exports.handler = async (event) => {
 
   const locationCode = props.locationCode;
   const carrierCode = '1';
-  const claimNumber = props.claimNumber || `ORDER-${orderId}`;
+  const claimNumber = `ORDER-${orderId}`;
   const timeslotStart = props.timeslotStart;
   const timeslotEnd = props.timeslotEnd;
   const vehicleYear = props.vehicleYear ? parseInt(props.vehicleYear, 10) : null;
